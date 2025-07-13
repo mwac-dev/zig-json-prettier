@@ -7,7 +7,6 @@ pub fn main() !void {
     const allocator = std.heap.page_allocator;
 
     const path = "input.json";
-    const outputPath = "./output";
 
     // Opening the file
     const file = try std.fs.cwd().openFile(path, .{});
@@ -21,11 +20,6 @@ pub fn main() !void {
     var parsed = try json.parseFromSlice(json.Value, allocator, contents, .{});
     defer parsed.deinit();
 
-    var outputDir = try utils.ensureDirExists(outputPath);
-    defer outputDir.close();
-
-    var outputFile = try outputDir.createFile("output.json", .{ .truncate = true });
-    defer outputFile.close();
     var args_allocator = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer args_allocator.deinit();
 
@@ -39,7 +33,7 @@ pub fn main() !void {
             return;
         },
         args.ParseArgsError.InvalidIndentValue => {
-            std.debug.print("Error: Invalid indent value.\n", .{});
+            std.debug.print("Error: Invalid indent value.\n Use --indent=N where N is 0-8 or 'tab'", .{});
             return;
         },
         args.ParseArgsError.MissingIndentValue => {
@@ -58,17 +52,7 @@ pub fn main() !void {
 
     const parsed_indent = parsed_args.indent_spaces;
 
-    // whitespace: enum {
-    //     minified,
-    //     indent_1,
-    //     indent_2,
-    //     indent_3,
-    //     indent_4,
-    //     indent_8,
-    //     indent_tab,
-    // } = .minified,
-
-    const options: json.StringifyOptions = .{ .whitespace = switch (parsed_indent) {
+    var json_options: json.StringifyOptions = .{ .whitespace = switch (parsed_indent) {
         0 => .minified,
         1 => .indent_1,
         2 => .indent_2,
@@ -79,5 +63,23 @@ pub fn main() !void {
         else => .indent_4,
     } };
 
-    _ = try json.stringify(parsed.value, options, outputFile.writer());
+    if (parsed_args.minify) {
+        json_options.whitespace = .minified;
+    }
+
+    // if (parsed_args.sort_keys) {
+    //     try parsed.value.sortObjectKeys();
+    // }
+
+    var outputPath: []const u8 = "./zjp_output";
+    if (parsed_args.output_path) |out_path| {
+        outputPath = out_path;
+    }
+    var outputDir = try utils.ensureDirExists(outputPath);
+    defer outputDir.close();
+
+    var outputFile = try outputDir.createFile("output.json", .{ .truncate = true });
+    defer outputFile.close();
+
+    _ = try json.stringify(parsed.value, json_options, outputFile.writer());
 }

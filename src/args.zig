@@ -38,7 +38,7 @@ pub fn parseArgs(allocator: mem.Allocator) ParseArgsError!Args {
             parsed.input_path = val;
         } else if (mem.eql(u8, arg, "-o") or mem.eql(u8, arg, "--output")) {
             const val = args.next() orelse return ParseArgsError.MissingOutputPath;
-            parsed.output_path = val;
+            parsed.output_path = try allocator.dupe(u8, val);
         } else if (mem.eql(u8, arg, "-m") or mem.eql(u8, arg, "--minify")) {
             parsed.minify = true;
         } else if (mem.eql(u8, arg, "-sk") or mem.eql(u8, arg, "--sort-keys")) {
