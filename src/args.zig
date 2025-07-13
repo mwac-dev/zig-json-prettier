@@ -43,12 +43,8 @@ pub fn parseArgs(allocator: mem.Allocator) ParseArgsError!Args {
             parsed.minify = true;
         } else if (mem.eql(u8, arg, "-sk") or mem.eql(u8, arg, "--sort-keys")) {
             parsed.sort_keys = true;
-        } else if (mem.startsWith(u8, arg, "--indent=") or mem.startsWith(u8, arg, "-in=")) {
-            const val = if (mem.startsWith(u8, arg, "--indent="))
-                arg["--indent=".len..]
-            else
-                arg["-in=".len..];
-            if (val.len == 0) return ParseArgsError.MissingIndentValue;
+        } else if (mem.startsWith(u8, arg, "--indent") or mem.startsWith(u8, arg, "-ind")) {
+            const val = args.next() orelse return ParseArgsError.MissingIndentValue;
 
             if (mem.eql(u8, val, "tab")) {
                 parsed.indent_spaces = 9; // special-case tab

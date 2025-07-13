@@ -3,6 +3,7 @@ const dir = std.fs.Dir;
 const json = @import("std").json;
 const utils = @import("utils.zig");
 const args = @import("args.zig");
+
 pub fn main() !void {
     const allocator = std.heap.page_allocator;
 
@@ -17,8 +18,8 @@ pub fn main() !void {
     defer allocator.free(contents);
 
     // Parsing JSON
-    var parsed = try json.parseFromSlice(json.Value, allocator, contents, .{});
-    defer parsed.deinit();
+    var parsed_json = try json.parseFromSlice(json.Value, allocator, contents, .{});
+    defer parsed_json.deinit();
 
     var args_allocator = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer args_allocator.deinit();
@@ -67,9 +68,11 @@ pub fn main() !void {
         json_options.whitespace = .minified;
     }
 
-    // if (parsed_args.sort_keys) {
-    //     try parsed.value.sortObjectKeys();
-    // }
+    if (parsed_args.sort_keys) {
+        var sort_allocator = std.heap.ArenaAllocator.init(allocator);
+        defer sort_allocator.deinit();
+        try utils.sortJsonValuesRecursive(sort_allocator.allocator(), &parsed_json.value);
+    }
 
     var outputPath: []const u8 = "./zjp_output";
     if (parsed_args.output_path) |out_path| {
@@ -81,5 +84,5 @@ pub fn main() !void {
     var outputFile = try outputDir.createFile("output.json", .{ .truncate = true });
     defer outputFile.close();
 
-    _ = try json.stringify(parsed.value, json_options, outputFile.writer());
+    _ = try json.stringify(parsed_json.value, json_options, outputFile.writer());
 }

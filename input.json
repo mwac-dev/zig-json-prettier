@@ -1,7 +1,8 @@
 {
-    "name": "Zig!!!",
+        "zig": "LANG",
+"name": "Zig!!!",
     "type": "programming language",
-    "year": 2015,
+"year": 2015,
     "features": [
     "manual memory management",
         "comptime",
