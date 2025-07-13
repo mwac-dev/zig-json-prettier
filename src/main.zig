@@ -3,7 +3,6 @@ const dir = std.fs.Dir;
 const json = @import("std").json;
 const utils = @import("utils.zig");
 const args = @import("args.zig");
-
 pub fn main() !void {
     const allocator = std.heap.page_allocator;
 
@@ -59,7 +58,26 @@ pub fn main() !void {
 
     const parsed_indent = parsed_args.indent_spaces;
 
-    std.debug.print("Parsed args: {any}\n Parsed indent: {any}", .{ parsed_args, parsed_indent });
+    // whitespace: enum {
+    //     minified,
+    //     indent_1,
+    //     indent_2,
+    //     indent_3,
+    //     indent_4,
+    //     indent_8,
+    //     indent_tab,
+    // } = .minified,
 
-    _ = try json.stringify(parsed.value, .{ .whitespace = .indent_4 }, outputFile.writer());
+    const options: json.StringifyOptions = .{ .whitespace = switch (parsed_indent) {
+        0 => .minified,
+        1 => .indent_1,
+        2 => .indent_2,
+        3 => .indent_3,
+        4 => .indent_4,
+        8 => .indent_8,
+        9 => .indent_tab,
+        else => .indent_4,
+    } };
+
+    _ = try json.stringify(parsed.value, options, outputFile.writer());
 }
